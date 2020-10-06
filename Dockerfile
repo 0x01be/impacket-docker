@@ -1,17 +1,22 @@
-FROM alpine as build
+FROM 0x01be/impacket:build as build
 
-RUN apk add --no-cache --virtual impacket-build-dependencies \
-    git \
-    build-base \
-    python3-dev \
-    py3-pip \
-    libffi-dev \
-    openssl-dev
+FROM alpine
 
-ENV IMPACKET_REVISION master
-RUN git clone --depth 1 --branch ${IMPACKET_REVISION} https://github.com/SecureAuthCorp/impacket.git /impacket
+COPY --from=build /opt/impacket/ /opt/impacket/
 
-WORKDIR /impacket
+RUN apk add --no-cache --virtual impacket-runtime-dependencies \
+    python3 \
+    libffi \
+    openssl
 
-RUN pip3 install . --prefix=/opt/impacket
+RUN adduser -D -u 1000 impacket
+RUN mkdir /workspace
+RUN chown impacket:impacket /workspace
+
+USER impacket
+
+ENV PATH ${PATH}:/opt/xsser/bin/
+ENV PYTHONPATH /usr/lib/python3.8/site-packages/:/opt/impacket/lib/python3.8/site-packages/
+
+WORKDIR /workspace
 
